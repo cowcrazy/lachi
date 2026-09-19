@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA OS - Lachi Engenharia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .canvas-container {
+            touch-action: none;
+        }
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; }
+            .print-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col min-h-screen">
+
+    <header class="bg-brand-900 text-white shadow-md no-print sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                <div class="bg-brand-500 text-white p-2 rounded-lg flex items-center justify-center font-bold text-lg sm:text-xl shrink-0">
+                    <i class="ph-bold ph-snowflake text-xl sm:text-2xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-bold text-sm sm:text-lg leading-tight truncate">LACHI ENGENHARIA</h1>
+                    <p class="text-[10px] sm:text-xs text-brand-100 opacity-80 mt-0.5 truncate">Gestão de OS - HVAC</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                <button onclick="createNewOS()" class="bg-brand-600 hover:bg-brand-500 text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1 shadow-sm">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>Nova OS</span>
+                </button>
+                <button onclick="toggleHistoryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-1 border border-slate-700">
+                    <i class="ph-bold ph-clock-counter-clockwise"></i>
+                    <span>Histórico</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 lg:p-8">
+        
+        <!-- View Toggle & Status bar -->
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-5 sm:mb-6 no-print bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between sm:justify-start gap-2">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Número da OS:</span>
+                <span id="currentOsNumber" class="font-mono text-base sm:text-lg font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-md border border-brand-100">OS-001</span>
+            </div>
+            <div class="grid grid-cols-2 sm:flex gap-2">
+                <button id="btnEditView" onclick="switchTab('form')" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-brand-50 text-brand-700 border border-brand-200 flex items-center justify-center gap-1.5 sm:gap-2">
+                    <i class="ph-bold ph-pencil-line"></i> Formulário
+                </button>
+                <button id="btnPreviewView" onclick="switchTab('preview')" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex items-center justify-center gap-1.5 sm:gap-2">
+                    <i class="ph-bold ph-file-text"></i> Visualizar/Imprimir
+                </button>
+            </div>
+        </div>
+
+        <!-- FORM SECTION -->
+        <form id="osForm" onsubmit="handleFormSubmit(event)" class="space-y-6 no-print">
+            
+            <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="ph-bold ph-user-list text-brand-500"></i> Informações do Atendimento e Cliente
+                    </h2>
+                    <span class="text-xs text-slate-400">* Campos de preenchimento rápido</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Data do Atendimento</label>
+                        <input type="date" id="dataAtendimento" required class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Tipo de OS</label>
+                        <select id="tipoOS" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                            <option value="PREVENTIVA">Manutenção Preventiva</option>
+                            <option value="CORRETIVA" selected>Manutenção Corretiva</option>
+                            <option value="INSTALACAO">Instalação / Startup</option>
+                            <option value="LEVANTAMENTO">Levantamento Técnico</option>
+                            <option value="RETORNO">Retorno / Garantia</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Cliente / Empresa</label>
+                        <input type="text" id="cliente" required placeholder="Nome do Cliente ou Razão Social" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Solicitante / Cargo</label>
+                        <input type="text" id="solicitante" placeholder="Quem solicitou o serviço" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Localização / Setor / Sala</label>
+                        <input type="text" id="localizacao" placeholder="Ex: Bloco B - Sala 302" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Hora Inicial</label>
+                        <input type="time" id="horaInicial" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition" onchange="calculateDuration()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Hora Final</label>
+                        <input type="time" id="horaFinal" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition" onchange="calculateDuration()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Tempo Total</label>
+                        <input type="text" id="tempoTotal" readonly placeholder="0h 00m" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-200 text-slate-600 font-semibold border">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="ph-bold ph-cpu text-brand-500"></i> Dados do Equipamento HVAC
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">TAG do Equipamento</label>
+                        <input type="text" id="tagEquipamento" placeholder="Ex: AC-SPLIT-01" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Marca / Modelo Evaporadora</label>
+                        <input type="text" id="evaporadoraModelo" placeholder="Ex: Carrier 18.000 BTU" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Nº de Série Evaporadora</label>
+                        <input type="text" id="evaporadoraSerie" placeholder="Nº de Série" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Placa / Capacidade</label>
+                        <input type="text" id="placaEquipamento" placeholder="Ex: 220V / R410A" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Marca / Modelo Condensadora</label>
+                        <input type="text" id="condensadoraModelo" placeholder="Ex: Carrier Inverter" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Nº de Série Condensadora</label>
+                        <input type="text" id="condensadoraSerie" placeholder="Nº de Série" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="ph-bold ph-first-aid text-brand-500"></i> Matriz de Diagnóstico Inteligente
+                    </h2>
+                    <span class="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded font-medium">Guiado</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Selecione a Falha Detectada</label>
+                    <select id="selectDefeito" onchange="updateDiagnosticCards()" class="w-full text-sm border-slate-300 rounded-lg p-3 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium text-slate-800">
+                        <option value="">-- Selecione uma falha para carregar orientação técnica --</option>
+                    </select>
+                </div>
+
+                <!-- Diagnostic Cards Container -->
+                <div id="diagnosticCardContainer" class="hidden grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3.5 text-xs text-amber-900 shadow-sm">
+                        <div class="font-bold flex items-center gap-1.5 mb-1.5 text-amber-800">
+                            <i class="ph-bold ph-warning-circle text-base"></i> Causa Provável
+                        </div>
+                        <p id="diagCausa" class="leading-relaxed"></p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3.5 text-xs text-blue-900 shadow-sm">
+                        <div class="font-bold flex items-center gap-1.5 mb-1.5 text-blue-800">
+                            <i class="ph-bold ph-wrench text-base"></i> Teste a Realizar
+                        </div>
+                        <p id="diagTeste" class="leading-relaxed"></p>
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3.5 text-xs text-emerald-900 shadow-sm">
+                        <div class="font-bold flex items-center gap-1.5 mb-1.5 text-emerald-800">
+                            <i class="ph-bold ph-check-circle text-base"></i> Solução Recomendada
+                        </div>
+                        <p id="diagSolucao" class="leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Descrição Detalhada do Defeito/Problema</label>
+                    <textarea id="descricaoDefeito" rows="2" placeholder="Descreva detalhes específicos encontrados na inspeção..." class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition"></textarea>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="ph-bold ph-clipboard-text text-brand-500"></i> Serviços Executados e Materiais
+                    </h2>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Descrição Detalhada dos Serviços Executados</label>
+                    <textarea id="servicosExecutados" rows="3" placeholder="Ex: Efetuado recolhimento do gás, solda no ponto de vazamento na linha de alta, vácuo no sistema a 450 mícrons e carga de fluido R410a conforme etiqueta..." class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Materiais e Peças Utilizados (Código / Descrição / Qtd / Unidade)</label>
+                    <textarea id="materiaisUtilizados" rows="2" placeholder="Ex: 1x Capacitor 35uF, 0.8kg Fluido R410A, 1x Fita Isolante 3M..." class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Status da Inspeção</label>
+                        <select id="statusInspecao" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium">
+                            <option value="INSPEÇÃO APROVADA / EQUIPAMENTO OPERACIONAL">INSPEÇÃO APROVADA / EQUIPAMENTO OPERACIONAL</option>
+                            <option value="APROVADA COM PENDÊNCIAS">APROVADA COM PENDÊNCIAS</option>
+                            <option value="EQUIPAMENTO INOPERANTE / AGUARDANDO PEÇAS">EQUIPAMENTO INOPERANTE / AGUARDANDO PEÇAS</option>
+                            <option value="REPROVADA">REPROVADA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Técnico Responsável</label>
+                        <input type="text" id="tecnicoResponsavel" required placeholder="Nome do Técnico da Lachi" class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Observações Técnicas / Pendências / Recomendações</label>
+                    <textarea id="observacoesTecnicas" rows="2" placeholder="Recomendações técnicas para o cliente..." class="w-full text-sm border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition"></textarea>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <h2 class="text-base font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="ph-bold ph-pen text-brand-500"></i> Assinatura Digital Touch Screen
+                    </h2>
+                    <span class="text-xs text-slate-500">Assine com o dedo no celular ou com o mouse</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <!-- Técnico Signature -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-slate-700">Assinatura do Técnico</label>
+                        <div class="canvas-container relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden touch-none">
+                            <canvas id="canvasTecnico" class="w-full h-40 sm:h-36 bg-white cursor-crosshair"></canvas>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <button type="button" onclick="clearSignature('canvasTecnico')" class="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 font-medium p-1">
+                                <i class="ph-bold ph-trash"></i> Limpar
+                            </button>
+                            <span id="statusTecnico" class="text-xs text-amber-600 flex items-center gap-1">
+                                <i class="ph-bold ph-circle"></i> Pendente
+                            </span>
+                        </div>
+                        <div class="pt-1">
+                            <label class="block text-[11px] font-medium text-slate-500 mb-1">Técnico Responsável</label>
+                            <input type="text" id="tecnicoAssinaturaDisplay" readonly placeholder="Preenchido nos dados acima" class="w-full text-xs border-slate-200 rounded-lg p-2.5 sm:p-2 bg-slate-100 text-slate-600 border cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <!-- Cliente Signature -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-medium text-slate-700">Assinatura do Cliente / Responsável</label>
+                        <div class="canvas-container relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden touch-none">
+                            <canvas id="canvasCliente" class="w-full h-40 sm:h-36 bg-white cursor-crosshair"></canvas>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <button type="button" onclick="clearSignature('canvasCliente')" class="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 font-medium p-1">
+                                <i class="ph-bold ph-trash"></i> Limpar
+                            </button>
+                            <span id="statusCliente" class="text-xs text-amber-600 flex items-center gap-1">
+                                <i class="ph-bold ph-circle"></i> Pendente
+                            </span>
+                        </div>
+                        <div class="pt-1">
+                            <label class="block text-[11px] font-medium text-slate-500 mb-1">Nome legível de quem assinou (Cliente)</label>
+                            <input type="text" id="nomeResponsavelCliente" placeholder="Digite o nome legível de quem assinou" class="w-full text-xs border-slate-300 rounded-lg p-2.5 sm:p-2 bg-slate-50 border focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Action Buttons -->
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4">
+                <button type="button" onclick="resetForm()" class="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200 rounded-xl transition text-center">
+                    Limpar Tudo
+                </button>
+                <button type="submit" class="w-full sm:w-auto px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-floppy-disk text-lg"></i> Gerar Ordem de Serviço
+                </button>
+            </div>
+        </form>
+
+        <div id="previewContainer" class="hidden space-y-4">
+            
+            <!-- Controls bar -->
+            <div class="no-print bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <button onclick="switchTab('form')" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="ph-bold ph-arrow-left"></i> Voltar para Edição
+                </button>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                    <div id="cloudStatusBadge" class="hidden text-xs px-2.5 py-1 rounded-full items-center justify-center gap-1.5 font-medium"></div>
+                    <div class="grid grid-cols-2 sm:flex items-center gap-2">
+                        <button onclick="window.print()" class="px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg transition flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-printer"></i> Imprimir
+                        </button>
+                        <button onclick="downloadPDF()" class="px-5 py-2.5 sm:py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-download-simple"></i> Baixar PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsive Document Scroll Wrapper -->
+            <div class="overflow-x-auto pb-4 -mx-1 sm:mx-0">
+                <div id="pdfContent" class="min-w-[650px] sm:min-w-0 bg-white p-6 sm:p-10 rounded-xl shadow-lg border border-slate-200 print-card space-y-6 text-slate-800">
+                
+                <!-- OS Header -->
+                <div class="flex justify-between items-start border-b-2 border-brand-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-brand-900 text-white p-3 rounded-xl font-bold text-2xl flex items-center justify-center">
+                            <i class="ph-bold ph-snowflake"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-black text-brand-900 tracking-tight">LACHI ENGENHARIA</h1>
+                            <p class="text-xs text-slate-500 font-medium">SISTEMAS DE REFRIGERAÇÃO E CLIMATIZAÇÃO HVAC</p>
+                            <p class="text-xs text-slate-400">Manutenção Preventiva, Corretiva e Instalações</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block px-3 py-1 bg-brand-50 text-brand-800 font-mono font-bold text-xl rounded-lg border border-brand-200" id="pdfOsNumber">OS-001</span>
+                        <p class="text-xs text-slate-500 mt-1">Data: <span id="pdfData" class="font-medium">--/--/----</span></p>
+                        <span id="pdfTipo" class="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 rounded uppercase">CORRETIVA</span>
+                    </div>
+                </div>
+
+                <!-- Client & Service Info Table -->
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div class="border rounded-lg p-3 bg-slate-50 space-y-1">
+                        <p class="text-slate-400 font-semibold uppercase text-[10px]">Cliente / Solicitante</p>
+                        <p class="font-bold text-slate-900 text-sm" id="pdfCliente">-</p>
+                        <p class="text-slate-600"><strong>Solicitante:</strong> <span id="pdfSolicitante">-</span></p>
+                    </div>
+                    <div class="border rounded-lg p-3 bg-slate-50 space-y-1">
+                        <p class="text-slate-400 font-semibold uppercase text-[10px]">Localização & Atendimento</p>
+                        <p class="font-bold text-slate-900 text-sm" id="pdfLocalizacao">-</p>
+                        <p class="text-slate-600"><strong>Horário:</strong> <span id="pdfHorario">-</span></p>
+                        <p class="text-slate-600"><strong>Tempo Total:</strong> <span id="pdfTempoTotal">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Equipment Details -->
+                <div class="border rounded-lg p-3 bg-slate-50 text-xs space-y-2">
+                    <p class="text-slate-400 font-semibold uppercase text-[10px] border-b pb-1">Especificações Técnicas do Equipamento</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <p><strong>TAG:</strong> <span id="pdfTag">-</span></p>
+                        <p><strong>Placa/Capacidade:</strong> <span id="pdfPlaca">-</span></p>
+                        <p><strong>Técnico:</strong> <span id="pdfTecnicoName">-</span></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                        <p><strong>Evaporadora:</strong> <span id="pdfEvaporadora">-</span> (Série: <span id="pdfEvaporadoraSerie">-</span>)</p>
+                        <p><strong>Condensadora:</strong> <span id="pdfCondensadora">-</span> (Série: <span id="pdfCondensadoraSerie">-</span>)</p>
+                    </div>
+                </div>
+
+                <!-- Diagnostic & Cause -->
+                <div class="border rounded-lg p-3 space-y-2 text-xs">
+                    <p class="text-slate-400 font-semibold uppercase text-[10px] border-b pb-1">Diagnóstico e Falha Detectada</p>
+                    <p class="font-bold text-amber-800 bg-amber-50 p-2 rounded border border-amber-200" id="pdfDefeito">-</p>
+                    <p class="text-slate-700" id="pdfDescricaoDefeito"></p>
+                    
+                    <div id="pdfDiagnosticMatrixBox" class="grid grid-cols-3 gap-2 pt-2 border-t text-[11px]">
+                        <div>
+                            <strong class="text-slate-500 block">Causa Provável:</strong>
+                            <span id="pdfCausa">-</span>
+                        </div>
+                        <div>
+                            <strong class="text-slate-500 block">Teste Realizado:</strong>
+                            <span id="pdfTeste">-</span>
+                        </div>
+                        <div>
+                            <strong class="text-slate-500 block">Solução Técnica:</strong>
+                            <span id="pdfSolucao">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Executed Services -->
+                <div class="border rounded-lg p-3 space-y-2 text-xs">
+                    <p class="text-slate-400 font-semibold uppercase text-[10px] border-b pb-1">Serviços Executados e Peças</p>
+                    <div>
+                        <strong class="text-slate-600 block mb-0.5">Descrição dos Serviços:</strong>
+                        <p class="whitespace-pre-line text-slate-800" id="pdfServicos">-</p>
+                    </div>
+                    <div class="pt-2 border-t">
+                        <strong class="text-slate-600 block mb-0.5">Peças / Materiais Utilizados:</strong>
+                        <p class="whitespace-pre-line text-slate-800" id="pdfMateriais">-</p>
+                    </div>
+                </div>
+
+                <!-- Status & Observations -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div class="border rounded-lg p-3 space-y-1">
+                        <p class="text-slate-400 font-semibold uppercase text-[10px]">Status Final do Equipamento</p>
+                        <p class="font-bold text-sm text-brand-800" id="pdfStatusInspecao">-</p>
+                    </div>
+                    <div class="border rounded-lg p-3 space-y-1">
+                        <p class="text-slate-400 font-semibold uppercase text-[10px]">Observações / Recomendações</p>
+                        <p class="text-slate-700" id="pdfObservacoes">-</p>
+                    </div>
+                </div>
+
+                <!-- Signatures Display -->
+                <div class="grid grid-cols-2 gap-8 pt-8 border-t border-slate-200 text-xs">
+                    <div class="text-center space-y-2">
+                        <div class="h-20 flex items-center justify-center border-b border-slate-400">
+                            <img id="pdfImgTecnico" class="max-h-16 hidden" alt="Assinatura Técnico">
+                            <span id="pdfTextTecnicoPendente" class="text-slate-300 italic">Sem Assinatura Digital</span>
+                        </div>
+                        <p class="font-bold text-slate-800" id="pdfNomeTecnicoFooter">Técnico Responsável</p>
+                        <p class="text-[10px] text-slate-400">Lachi Engenharia</p>
+                    </div>
+                    <div class="text-center space-y-2">
+                        <div class="h-20 flex items-center justify-center border-b border-slate-400">
+                            <img id="pdfImgCliente" class="max-h-16 hidden" alt="Assinatura Cliente">
+                            <span id="pdfTextClientePendente" class="text-slate-300 italic">Sem Assinatura Digital</span>
+                        </div>
+                        <p class="font-bold text-slate-800" id="pdfNomeClienteFooter">Cliente / Responsável</p>
+                        <p class="text-[10px] text-slate-400">Aceite do Serviço</p>
+                    </div>
+                </div>
+
+                <!-- Footer Note -->
+                <div class="text-center text-[10px] text-slate-400 pt-4">
+                    Lachi Engenharia - Soluções em Climatização HVAC • Documento gerado eletronicamente.
+                </div>
+            </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                        <i class="ph-bold ph-clock-counter-clockwise text-brand-600"></i> Histórico de Ordens de Serviço
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Clique em qualquer OS para reabrir, visualizar ou reimprimir</p>
+                </div>
+                <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+            <div id="historyList" class="flex-1 overflow-y-auto space-y-2 text-xs">
+                <!-- Dynamic Items -->
+            </div>
+            <div class="border-t pt-3 flex justify-between items-center">
+                <button onclick="clearHistory()" class="text-xs text-rose-600 hover:underline">Limpar Todo Histórico</button>
+                <button onclick="toggleHistoryModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Diagnostic Matrix Complete Catalog
+        const DIAGNOSTIC_MATRIX = [
+            {
+                defeito: "Não liga",
+                causa: "Falta de alimentação elétrica, disjuntor desligado ou placa com falha",
+                teste: "Medir tensão de alimentação e verificar disjuntor",
+                solucao: "Restabelecer alimentação; corrigir instalação ou substituir componente defeituoso"
+            },
+            {
+                defeito: "Liga, mas não gela",
+                causa: "Filtro/serpentina sujos, baixa carga de refrigerante ou falha no compressor",
+                teste: "Verificar fluxo de ar, temperaturas e pressões do sistema",
+                solucao: "Limpar o equipamento; localizar e corrigir vazamento antes de ajustar a carga"
+            },
+            {
+                defeito: "Gela pouco",
+                causa: "Filtros sujos, baixa vazão de ar, refrigerante insuficiente ou ambiente com carga térmica elevada",
+                teste: "Medir temperatura de entrada/saída e verificar pressões e vazão",
+                solucao: "Realizar limpeza e corrigir a causa identificada"
+            },
+            {
+                defeito: "Evaporadora funciona e condensadora não liga",
+                causa: "Falha de comunicação, placa, capacitor, alimentação ou proteção do compressor",
+                teste: "Verificar tensão, sinais de comando e componentes elétricos",
+                solucao: "Corrigir fiação/conexões ou substituir componente defeituoso"
+            },
+            {
+                defeito: "Compressor não parte",
+                causa: "Capacitor defeituoso, proteção térmica acionada, baixa/alta tensão ou compressor com problema",
+                teste: "Medir tensão, corrente e capacitor; verificar continuidade e proteções",
+                solucao: "Substituir capacitor/componente defeituoso; se necessário, avaliar o compressor"
+            },
+            {
+                defeito: "Compressor liga e desliga rapidamente",
+                causa: "Sobrecarga, alta pressão, superaquecimento ou problema elétrico",
+                teste: "Medir corrente, pressões e temperatura; verificar ventilação da condensadora",
+                solucao: "Limpar condensadora, corrigir causa da pressão/temperatura e reparar falha elétrica"
+            },
+            {
+                defeito: "Evaporadora congela",
+                causa: "Baixa vazão de ar, filtro/serpentina sujos ou refrigerante insuficiente",
+                teste: "Inspecionar formação de gelo, fluxo de ar e parâmetros do circuito",
+                solucao: "Descongelar, limpar e investigar eventual vazamento/restrição"
+            },
+            {
+                defeito: "Vazamento de água pela evaporadora",
+                causa: "Dreno obstruído, bandeja suja ou instalação com inclinação inadequada",
+                teste: "Inspecionar bandeja e testar escoamento do dreno",
+                solucao: "Limpar/desobstruir dreno e corrigir instalação"
+            },
+            {
+                defeito: "Água não sai pelo dreno",
+                causa: "Dreno obstruído, mangueira dobrada ou desnível incorreto",
+                teste: "Testar passagem de água pelo dreno",
+                solucao: "Desobstruir ou substituir mangueira e corrigir o caimento"
+            },
+            {
+                defeito: "Vazamento de refrigerante",
+                causa: "Conexão mal vedada, tubulação danificada ou corrosão",
+                teste: "Teste de estanqueidade e inspeção das conexões",
+                solucao: "Reparar o ponto de vazamento, realizar vácuo e efetuar a carga conforme especificação do fabricante"
+            },
+            {
+                defeito: "Alta pressão no sistema",
+                causa: "Condensadora suja, ventilação insuficiente, excesso de refrigerante ou presença de não condensáveis",
+                teste: "Medir pressão e temperatura e verificar fluxo de ar",
+                solucao: "Limpar condensadora e corrigir a causa; recuperar/recarregar refrigerante conforme procedimento"
+            },
+            {
+                defeito: "Baixa pressão no sistema",
+                causa: "Falta de refrigerante, vazamento ou restrição no circuito",
+                teste: "Medir pressão, temperaturas e verificar vazamentos",
+                solucao: "Corrigir vazamento/restrição e ajustar a carga conforme especificação"
+            },
+            {
+                defeito: "Ventilador da evaporadora não funciona",
+                causa: "Motor, capacitor, placa ou conexão com defeito",
+                teste: "Verificar alimentação do motor e resistência dos enrolamentos",
+                solucao: "Corrigir conexão ou substituir motor/capacitor/placa"
+            },
+            {
+                defeito: "Ventilador da condensadora não funciona",
+                causa: "Motor, capacitor, placa ou alimentação defeituosa",
+                teste: "Medir tensão, capacitor e corrente do motor",
+                solucao: "Reparar conexão ou substituir componente defeituoso"
+            },
+            {
+                defeito: "Ruído excessivo",
+                causa: "Hélice desbalanceada, rolamento desgastado, fixação solta ou vibração da tubulação",
+                teste: "Inspeção mecânica e teste durante funcionamento",
+                solucao: "Reapertar fixações, corrigir vibração ou substituir componente"
+            },
+            {
+                defeito: "Mau cheiro",
+                causa: "Filtros, serpentina, bandeja ou dreno contaminados",
+                teste: "Inspeção visual e avaliação de sujeira/umidade",
+                solucao: "Higienizar filtros, serpentina, bandeja e sistema de drenagem"
+            },
+            {
+                defeito: "Disjuntor desarma",
+                causa: "Curto-circuito, sobrecorrente, compressor/motor com problema ou instalação inadequada",
+                teste: "Medir corrente, isolamento e tensão; verificar circuito",
+                solucao: "Corrigir instalação ou substituir componente defeituoso"
+            },
+            {
+                defeito: "Controle remoto não funciona",
+                causa: "Pilhas descarregadas, controle defeituoso ou receptor da evaporadora com falha",
+                teste: "Testar pilhas, emissão do controle e receptor",
+                solucao: "Substituir pilhas/controle ou reparar receptor"
+            },
+            {
+                defeito: "Temperatura não estabiliza",
+                causa: "Sensor com defeito, posicionamento inadequado ou placa com falha",
+                teste: "Verificar sensor e comparar leitura com temperatura ambiente",
+                solucao: "Reposicionar ou substituir sensor; avaliar placa"
+            },
+            {
+                defeito: "Persiana/direcionador não movimenta",
+                causa: "Motor de swing, engrenagem ou placa com defeito",
+                teste: "Acionar função swing e verificar alimentação do motor",
+                solucao: "Corrigir mecanismo ou substituir motor/componente"
+            },
+            {
+                defeito: "Equipamento apresenta código de erro",
+                causa: "Falha identificada pelo sistema eletrônico",
+                teste: "Consultar código no manual técnico e realizar medições correspondentes",
+                solucao: "Corrigir a causa indicada pelo fabricante"
+            },
+            {
+                defeito: "Consumo elétrico elevado",
+                causa: "Serpentinas sujas, baixa eficiência, tensão inadequada ou compressor sobrecarregado",
+                teste: "Medir corrente, tensão e temperaturas; verificar limpeza",
+                solucao: "Fazer manutenção e corrigir a causa do consumo elevado"
+            },
+            {
+                defeito: "Condensadora vibra excessivamente",
+                causa: "Base desnivelada, fixação inadequada ou componente mecânico desgastado",
+                teste: "Inspeção da base, suportes e conjunto compressor/ventilador",
+                solucao: "Nivelar, reapertar fixações ou substituir componente desgastado"
+            },
+            {
+                defeito: "Baixa vazão de ar",
+                causa: "Filtro/serpentina obstruídos ou ventilador com problema",
+                teste: "Inspecionar filtros, serpentina e rotação do ventilador",
+                solucao: "Limpar o sistema e reparar/substituir o componente necessário"
+            }
+        ];
+
+        // State variables
+        let currentOSCounter = 1;
+        let isCurrentOSSaved = false;
+        let signatures = { canvasTecnico: false, canvasCliente: false };
+
+        function getLocalDateString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function setupCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) return;
+
+                const newWidth = Math.floor(rect.width);
+                const newHeight = Math.floor(rect.height);
+
+                if (canvas.width !== newWidth || canvas.height !== newHeight) {
+                    let backup = null;
+                    if (signatures[canvasId]) {
+                        backup = canvas.toDataURL();
+                    }
+
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    ctx.lineWidth = 2.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.strokeStyle = '#0f172a';
+
+                    if (backup) {
+                        const img = new Image();
+                        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        img.src = backup;
+                    }
+                }
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            let drawing = false;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+
+            function startDrawing(e) {
+                if (e.cancelable) e.preventDefault();
+                drawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                if (e.cancelable) e.preventDefault();
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                signatures[canvasId] = true;
+                updateSignatureStatus(canvasId, true);
+            }
+
+            function stopDrawing() {
+                drawing = false;
+            }
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            window.addEventListener('touchend', stopDrawing);
+        }
+
+        function clearSignature(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            signatures[canvasId] = false;
+            updateSignatureStatus(canvasId, false);
+        }
+
+        function updateSignatureStatus(canvasId, isSigned) {
+            const statusEl = document.getElementById(canvasId === 'canvasTecnico' ? 'statusTecnico' : 'statusCliente');
+            if (isSigned) {
+                statusEl.className = 'text-xs text-emerald-600 flex items-center gap-1 font-semibold';
+                statusEl.innerHTML = '<i class="ph-bold ph-check-circle"></i> Assinado';
+            } else {
+                statusEl.className = 'text-xs text-amber-600 flex items-center gap-1';
+                statusEl.innerHTML = '<i class="ph-bold ph-circle"></i> Pendente';
+            }
+        }
+
+        window.onload = function() {
+            // Load Counter from Storage
+            const savedCounter = localStorage.getItem('lachi_os_counter');
+            if (savedCounter) {
+                currentOSCounter = parseInt(savedCounter, 10);
+            }
+            updateOSNumberDisplay();
+
+            // Set today's date default using local timezone
+            document.getElementById('dataAtendimento').value = getLocalDateString();
+
+            // Populate Diagnostic Select
+            const select = document.getElementById('selectDefeito');
+            DIAGNOSTIC_MATRIX.forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = item.defeito;
+                select.appendChild(option);
+            });
+
+            // Initialize Canvases
+            setupCanvas('canvasTecnico');
+            setupCanvas('canvasCliente');
+
+            // Sync Technician name to signature display
+            const tecnicoInput = document.getElementById('tecnicoResponsavel');
+            const displayInput = document.getElementById('tecnicoAssinaturaDisplay');
+            if (tecnicoInput && displayInput) {
+                tecnicoInput.addEventListener('input', () => {
+                    displayInput.value = tecnicoInput.value;
+                });
+            }
+        };
+
+        function getFormattedOSNumber() {
+            return `OS-${String(currentOSCounter).padStart(3, '0')}`;
+        }
+
+        function updateOSNumberDisplay() {
+            document.getElementById('currentOsNumber').textContent = getFormattedOSNumber();
+        }
+
+        // Calculate hours difference
+        function calculateDuration() {
+            const start = document.getElementById('horaInicial').value;
+            const end = document.getElementById('horaFinal').value;
+            if (start && end) {
+                const startDate = new Date(`1970-01-01T${start}:00`);
+                const endDate = new Date(`1970-01-01T${end}:00`);
+                let diff = (endDate - startDate) / 1000 / 60; // minutes
+                if (diff < 0) diff += 24 * 60;
+                const hours = Math.floor(diff / 60);
+                const minutes = diff % 60;
+                document.getElementById('tempoTotal').value = `${hours}h ${String(minutes).padStart(2, '0')}m`;
+            } else {
+                document.getElementById('tempoTotal').value = '';
+            }
+        }
+
+        function updateDiagnosticCards() {
+            const selectVal = document.getElementById('selectDefeito').value;
+            const container = document.getElementById('diagnosticCardContainer');
+
+            if (selectVal === "") {
+                container.classList.add('hidden');
+                container.classList.remove('grid');
+                return;
+            }
+
+            const data = DIAGNOSTIC_MATRIX[selectVal];
+            document.getElementById('diagCausa').textContent = data.causa;
+            document.getElementById('diagTeste').textContent = data.teste;
+            document.getElementById('diagSolucao').textContent = data.solucao;
+            container.classList.remove('hidden');
+            container.classList.add('grid');
+        }
+
+        // Switch View Tabs
+        function switchTab(tab) {
+            const form = document.getElementById('osForm');
+            const preview = document.getElementById('previewContainer');
+            const btnEdit = document.getElementById('btnEditView');
+            const btnPrev = document.getElementById('btnPreviewView');
+
+            if (tab === 'preview') {
+                updatePreviewData();
+                form.classList.add('hidden');
+                preview.classList.remove('hidden');
+                btnPrev.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-2';
+                btnEdit.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex items-center gap-2';
+            } else {
+                form.classList.remove('hidden');
+                preview.classList.add('hidden');
+                btnEdit.className = 'px-4 py-2 text-sm font-medium rounded-lg bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-2';
+                btnPrev.className = 'px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex items-center gap-2';
+            }
+        }
+
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxpQxwHG5Hd1upzVzJKKYZDaMY8G9IBwCzz_33AbMH6X06xOIBLla2UHhpSAapLuTPJ/exec";
+
+        function showCloudSyncStatus(status) {
+            const badge = document.getElementById('cloudStatusBadge');
+            if (!badge) return;
+
+            badge.classList.remove('hidden');
+            if (status === 'syncing') {
+                badge.className = 'flex text-xs px-2.5 py-1 rounded-full items-center justify-center gap-1.5 font-medium bg-amber-50 text-amber-700 border border-amber-200';
+                badge.innerHTML = '<i class="ph-bold ph-arrows-clockwise animate-spin text-sm"></i> Enviando para Google Planilhas...';
+            } else if (status === 'success') {
+                badge.className = 'flex text-xs px-2.5 py-1 rounded-full items-center justify-center gap-1.5 font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+                badge.innerHTML = '<i class="ph-bold ph-cloud-check text-base"></i> Salvo na Planilha Google';
+            } else if (status === 'error') {
+                badge.className = 'flex text-xs px-2.5 py-1 rounded-full items-center justify-center gap-1.5 font-medium bg-rose-50 text-rose-700 border border-rose-200';
+                badge.innerHTML = '<i class="ph-bold ph-warning-circle text-base"></i> Falha ao enviar para Planilha';
+            }
+        }
+
+        function sendOSToGoogleSheets() {
+            const selIndex = document.getElementById('selectDefeito').value;
+            const diagData = selIndex !== "" ? DIAGNOSTIC_MATRIX[selIndex] : null;
+
+            const payload = {
+                id: getFormattedOSNumber(),
+                dataAtendimento: document.getElementById('dataAtendimento').value,
+                tipoOS: document.getElementById('tipoOS').value,
+                cliente: document.getElementById('cliente').value,
+                solicitante: document.getElementById('solicitante').value,
+                localizacao: document.getElementById('localizacao').value,
+                horaInicial: document.getElementById('horaInicial').value,
+                horaFinal: document.getElementById('horaFinal').value,
+                tempoTotal: document.getElementById('tempoTotal').value,
+                tagEquipamento: document.getElementById('tagEquipamento').value,
+                evaporadoraModelo: document.getElementById('evaporadoraModelo').value,
+                evaporadoraSerie: document.getElementById('evaporadoraSerie').value,
+                placaEquipamento: document.getElementById('placaEquipamento').value,
+                condensadoraModelo: document.getElementById('condensadoraModelo').value,
+                condensadoraSerie: document.getElementById('condensadoraSerie').value,
+                defeito: diagData ? diagData.defeito : 'Geral',
+                causa: diagData ? diagData.causa : '',
+                teste: diagData ? diagData.teste : '',
+                solucao: diagData ? diagData.solucao : '',
+                descricaoDefeito: document.getElementById('descricaoDefeito').value,
+                servicosExecutados: document.getElementById('servicosExecutados').value,
+                materiaisUtilizados: document.getElementById('materiaisUtilizados').value,
+                statusInspecao: document.getElementById('statusInspecao').value,
+                tecnicoResponsavel: document.getElementById('tecnicoResponsavel').value,
+                nomeResponsavelCliente: document.getElementById('nomeResponsavelCliente').value,
+                observacoesTecnicas: document.getElementById('observacoesTecnicas').value
+            };
+
+            showCloudSyncStatus('syncing');
+
+            fetch(GOOGLE_SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                console.log("OS sincronizada com Google Sheets!");
+                showCloudSyncStatus('success');
+            }).catch(err => {
+                console.error("Erro ao sincronizar com Google Sheets:", err);
+                showCloudSyncStatus('error');
+            });
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Save to LocalStorage History
+            saveCurrentOSToHistory();
+            isCurrentOSSaved = true;
+
+            // Send to Google Sheets (Cloud)
+            sendOSToGoogleSheets();
+
+            // Switch to Preview
+            switchTab('preview');
+        }
+
+        function updatePreviewData() {
+            document.getElementById('pdfOsNumber').textContent = getFormattedOSNumber();
+            document.getElementById('pdfData').textContent = formatDate(document.getElementById('dataAtendimento').value);
+            document.getElementById('pdfTipo').textContent = document.getElementById('tipoOS').value;
+            
+            document.getElementById('pdfCliente').textContent = document.getElementById('cliente').value || '-';
+            document.getElementById('pdfSolicitante').textContent = document.getElementById('solicitante').value || '-';
+            document.getElementById('pdfLocalizacao').textContent = document.getElementById('localizacao').value || '-';
+            
+            const hIni = document.getElementById('horaInicial').value;
+            const hFin = document.getElementById('horaFinal').value;
+            document.getElementById('pdfHorario').textContent = (hIni && hFin) ? `${hIni} às ${hFin}` : '-';
+            document.getElementById('pdfTempoTotal').textContent = document.getElementById('tempoTotal').value || '-';
+
+            document.getElementById('pdfTag').textContent = document.getElementById('tagEquipamento').value || '-';
+            document.getElementById('pdfPlaca').textContent = document.getElementById('placaEquipamento').value || '-';
+            document.getElementById('pdfTecnicoName').textContent = document.getElementById('tecnicoResponsavel').value || '-';
+
+            document.getElementById('pdfEvaporadora').textContent = document.getElementById('evaporadoraModelo').value || '-';
+            document.getElementById('pdfEvaporadoraSerie').textContent = document.getElementById('evaporadoraSerie').value || '-';
+            document.getElementById('pdfCondensadora').textContent = document.getElementById('condensadoraModelo').value || '-';
+            document.getElementById('pdfCondensadoraSerie').textContent = document.getElementById('condensadoraSerie').value || '-';
+
+            const selIndex = document.getElementById('selectDefeito').value;
+            if (selIndex !== "") {
+                const diag = DIAGNOSTIC_MATRIX[selIndex];
+                document.getElementById('pdfDefeito').textContent = `Defeito: ${diag.defeito}`;
+                document.getElementById('pdfCausa').textContent = diag.causa;
+                document.getElementById('pdfTeste').textContent = diag.teste;
+                document.getElementById('pdfSolucao').textContent = diag.solucao;
+                document.getElementById('pdfDiagnosticMatrixBox').classList.remove('hidden');
+            } else {
+                document.getElementById('pdfDefeito').textContent = 'Defeito não categorizado';
+                document.getElementById('pdfDiagnosticMatrixBox').classList.add('hidden');
+            }
+
+            document.getElementById('pdfDescricaoDefeito').textContent = document.getElementById('descricaoDefeito').value || '';
+            document.getElementById('pdfServicos').textContent = document.getElementById('servicosExecutados').value || 'Nenhum detalhe informado.';
+            document.getElementById('pdfMateriais').textContent = document.getElementById('materiaisUtilizados').value || 'Nenhum material cadastrado.';
+            
+            document.getElementById('pdfStatusInspecao').textContent = document.getElementById('statusInspecao').value;
+            document.getElementById('pdfObservacoes').textContent = document.getElementById('observacoesTecnicas').value || 'Sem observações adicionais.';
+
+            // Render Signatures
+            renderSignatureToPDF('canvasTecnico', 'pdfImgTecnico', 'pdfTextTecnicoPendente');
+            renderSignatureToPDF('canvasCliente', 'pdfImgCliente', 'pdfTextClientePendente');
+
+            // Footer Names
+            document.getElementById('pdfNomeTecnicoFooter').textContent = document.getElementById('tecnicoResponsavel').value || 'Técnico Responsável';
+            const respName = document.getElementById('nomeResponsavelCliente').value;
+            document.getElementById('pdfNomeClienteFooter').textContent = respName ? `${respName} (Cliente)` : 'Cliente / Responsável';
+        }
+
+        function renderSignatureToPDF(canvasId, imgId, textId) {
+            const canvas = document.getElementById(canvasId);
+            const img = document.getElementById(imgId);
+            const textP = document.getElementById(textId);
+
+            if (signatures[canvasId]) {
+                img.src = canvas.toDataURL('image/png');
+                img.classList.remove('hidden');
+                textP.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                textP.classList.remove('hidden');
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '--/--/----';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function createNewOS() {
+            if (confirm("Deseja iniciar uma nova Ordem de Serviço? O formulário atual será limpo.")) {
+                if (isCurrentOSSaved) {
+                    currentOSCounter++;
+                    localStorage.setItem('lachi_os_counter', currentOSCounter);
+                    isCurrentOSSaved = false;
+                }
+                resetForm();
+                switchTab('form');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('osForm').reset();
+            document.getElementById('dataAtendimento').value = getLocalDateString();
+            document.getElementById('tempoTotal').value = '';
+            const displayInput = document.getElementById('tecnicoAssinaturaDisplay');
+            if (displayInput) displayInput.value = '';
+            clearSignature('canvasTecnico');
+            clearSignature('canvasCliente');
+            const badge = document.getElementById('cloudStatusBadge');
+            if (badge) badge.classList.add('hidden');
+            updateDiagnosticCards();
+            updateOSNumberDisplay();
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('pdfContent');
+            const osNum = getFormattedOSNumber();
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `${osNum}_Lachi_Engenharia.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function saveCurrentOSToHistory() {
+            const osData = {
+                id: getFormattedOSNumber(),
+                counter: currentOSCounter,
+                dataAtendimento: document.getElementById('dataAtendimento').value,
+                tipoOS: document.getElementById('tipoOS').value,
+                cliente: document.getElementById('cliente').value,
+                solicitante: document.getElementById('solicitante').value,
+                localizacao: document.getElementById('localizacao').value,
+                horaInicial: document.getElementById('horaInicial').value,
+                horaFinal: document.getElementById('horaFinal').value,
+                tempoTotal: document.getElementById('tempoTotal').value,
+                tagEquipamento: document.getElementById('tagEquipamento').value,
+                evaporadoraModelo: document.getElementById('evaporadoraModelo').value,
+                evaporadoraSerie: document.getElementById('evaporadoraSerie').value,
+                placaEquipamento: document.getElementById('placaEquipamento').value,
+                condensadoraModelo: document.getElementById('condensadoraModelo').value,
+                condensadoraSerie: document.getElementById('condensadoraSerie').value,
+                selectDefeito: document.getElementById('selectDefeito').value,
+                descricaoDefeito: document.getElementById('descricaoDefeito').value,
+                servicosExecutados: document.getElementById('servicosExecutados').value,
+                materiaisUtilizados: document.getElementById('materiaisUtilizados').value,
+                statusInspecao: document.getElementById('statusInspecao').value,
+                tecnicoResponsavel: document.getElementById('tecnicoResponsavel').value,
+                observacoesTecnicas: document.getElementById('observacoesTecnicas').value,
+                nomeResponsavelCliente: document.getElementById('nomeResponsavelCliente').value,
+                defeito: document.getElementById('selectDefeito').value !== "" ? DIAGNOSTIC_MATRIX[document.getElementById('selectDefeito').value].defeito : 'Geral',
+                signatureTecnico: signatures['canvasTecnico'] ? document.getElementById('canvasTecnico').toDataURL('image/png') : null,
+                signatureCliente: signatures['canvasCliente'] ? document.getElementById('canvasCliente').toDataURL('image/png') : null,
+                savedAt: new Date().toISOString()
+            };
+
+            let history = JSON.parse(localStorage.getItem('lachi_os_history') || '[]');
+            const existingIndex = history.findIndex(item => item.id === osData.id);
+            if (existingIndex >= 0) {
+                history[existingIndex] = osData;
+            } else {
+                history.unshift(osData);
+            }
+            try {
+                localStorage.setItem('lachi_os_history', JSON.stringify(history));
+            } catch (err) {
+                console.error("Erro ao salvar no localStorage:", err);
+                alert("Aviso: Limite de armazenamento local atingido. Exclua algumas OSs antigas no histórico.");
+            }
+        }
+
+        function loadOSFromHistory(id) {
+            const history = JSON.parse(localStorage.getItem('lachi_os_history') || '[]');
+            const item = history.find(entry => entry.id === id);
+            if (!item) {
+                alert("Ordem de serviço não encontrada.");
+                return;
+            }
+
+            // Restore form fields
+            document.getElementById('dataAtendimento').value = item.dataAtendimento || '';
+            document.getElementById('tipoOS').value = item.tipoOS || 'CORRETIVA';
+            document.getElementById('cliente').value = item.cliente || '';
+            document.getElementById('solicitante').value = item.solicitante || '';
+            document.getElementById('localizacao').value = item.localizacao || '';
+            document.getElementById('horaInicial').value = item.horaInicial || '';
+            document.getElementById('horaFinal').value = item.horaFinal || '';
+            document.getElementById('tempoTotal').value = item.tempoTotal || '';
+
+            document.getElementById('tagEquipamento').value = item.tagEquipamento || '';
+            document.getElementById('evaporadoraModelo').value = item.evaporadoraModelo || '';
+            document.getElementById('evaporadoraSerie').value = item.evaporadoraSerie || '';
+            document.getElementById('placaEquipamento').value = item.placaEquipamento || '';
+            document.getElementById('condensadoraModelo').value = item.condensadoraModelo || '';
+            document.getElementById('condensadoraSerie').value = item.condensadoraSerie || '';
+
+            document.getElementById('selectDefeito').value = item.selectDefeito !== undefined ? item.selectDefeito : '';
+            document.getElementById('descricaoDefeito').value = item.descricaoDefeito || '';
+            document.getElementById('servicosExecutados').value = item.servicosExecutados || '';
+            document.getElementById('materiaisUtilizados').value = item.materiaisUtilizados || '';
+            document.getElementById('statusInspecao').value = item.statusInspecao || 'INSPEÇÃO APROVADA / EQUIPAMENTO OPERACIONAL';
+            document.getElementById('tecnicoResponsavel').value = item.tecnicoResponsavel || '';
+            const displayInput = document.getElementById('tecnicoAssinaturaDisplay');
+            if (displayInput) displayInput.value = item.tecnicoResponsavel || '';
+            document.getElementById('observacoesTecnicas').value = item.observacoesTecnicas || '';
+            document.getElementById('nomeResponsavelCliente').value = item.nomeResponsavelCliente || '';
+
+            // Restore OS Counter
+            if (item.counter) {
+                currentOSCounter = item.counter;
+            } else if (item.id) {
+                const parsed = parseInt(item.id.replace(/\D/g, ''), 10);
+                if (!isNaN(parsed)) currentOSCounter = parsed;
+            }
+            isCurrentOSSaved = true;
+            updateOSNumberDisplay();
+
+            // Restore diagnostic cards
+            updateDiagnosticCards();
+
+            // Restore canvas signatures
+            restoreSignature('canvasTecnico', item.signatureTecnico);
+            restoreSignature('canvasCliente', item.signatureCliente);
+
+            // Close modal
+            toggleHistoryModal();
+
+            // Switch to preview
+            switchTab('preview');
+        }
+
+        function restoreSignature(canvasId, dataUrl) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (dataUrl) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    signatures[canvasId] = true;
+                    updateSignatureStatus(canvasId, true);
+                };
+                img.src = dataUrl;
+            } else {
+                signatures[canvasId] = false;
+                updateSignatureStatus(canvasId, false);
+            }
+        }
+
+        function deleteOSFromHistory(id, event) {
+            if (event) event.stopPropagation();
+            if (confirm(`Deseja realmente excluir a ${id} do histórico?`)) {
+                let history = JSON.parse(localStorage.getItem('lachi_os_history') || '[]');
+                history = history.filter(item => item.id !== id);
+                localStorage.setItem('lachi_os_history', JSON.stringify(history));
+                renderHistory();
+            }
+        }
+
+        function toggleHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                renderHistory();
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('lachi_os_history') || '[]');
+
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-slate-400 italic text-center py-6">Nenhuma OS gerada anteriormente.</p>';
+                return;
+            }
+
+            historyList.innerHTML = history.map(item => {
+                const dateDisplay = formatDate(item.dataAtendimento || item.date);
+                const hasSignatures = !!(item.signatureTecnico || item.signatureCliente);
+                return `
+                <div onclick="loadOSFromHistory('${escapeHtml(item.id)}')" class="p-3.5 bg-slate-50 hover:bg-brand-50/60 rounded-xl border border-slate-200 hover:border-brand-200 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-bold text-brand-700 bg-white px-2 py-0.5 rounded border border-brand-100 text-xs">${escapeHtml(item.id)}</span>
+                            <span class="font-bold text-slate-800 text-sm">${escapeHtml(item.cliente || 'Sem Nome de Cliente')}</span>
+                            ${hasSignatures ? '<span class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.5 rounded flex items-center gap-1"><i class="ph-bold ph-pen"></i> Assinada</span>' : ''}
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            <strong>Defeito:</strong> ${escapeHtml(item.defeito || 'Geral')} 
+                            ${item.tagEquipamento ? `• <strong>TAG:</strong> ${escapeHtml(item.tagEquipamento)}` : ''}
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                        <span class="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200">${dateDisplay}</span>
+                        <button onclick="loadOSFromHistory('${escapeHtml(item.id)}')" title="Abrir e Visualizar OS" class="p-1.5 text-brand-600 hover:bg-brand-100 rounded-lg transition font-medium text-xs flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-square-out text-base"></i>
+                            <span class="hidden sm:inline">Abrir</span>
+                        </button>
+                        <button onclick="deleteOSFromHistory('${escapeHtml(item.id)}', event)" title="Excluir do Histórico" class="p-1.5 text-rose-500 hover:bg-rose-100 rounded-lg transition text-xs">
+                            <i class="ph-bold ph-trash text-base"></i>
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function clearHistory() {
+            if (confirm("Tem certeza que deseja apagar todo o histórico salvo no navegador?")) {
+                localStorage.removeItem('lachi_os_history');
+                renderHistory();
+            }
+        }
+    </script>
+</body>
+</html>
